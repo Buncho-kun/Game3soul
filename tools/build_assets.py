@@ -387,11 +387,8 @@ def main():
         if isinstance(im, tuple):
             im, anchors[k] = im[0], im[1:]
             sprites[k] = im
-    # 4x sprites are large on screen, so a slightly coarser quantiser is invisible and keeps the file small
     def job(k):
-        if k.startswith('prop.cg.'):
-            return 90          # full-screen stills: 90 is indistinguishable from 93 at 1672 px and saves ~2 MB
-        return 88 if (sprites[k].info.get('s') or 0) >= 3 else 93
+        return 93
     from concurrent.futures import ProcessPoolExecutor
     keys = list(sprites)
     with ProcessPoolExecutor() as ex:
