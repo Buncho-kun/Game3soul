@@ -7,7 +7,7 @@ standing pose is ~60 px tall in the 384x216 game canvas.
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-from boss_frames import RES
+from boss_frames import RES, shrink
 
 # (name, x0, y0, x1, y1)
 GROUPS = {
@@ -60,14 +60,5 @@ def frames(src_path):
             im = key_out(sheet[y0:y1, x0:x1])
             bb = im.getbbox()
             im = im.crop(bb)
-            w, h = max(1, round(im.width * scale * RES)), max(1, round(im.height * scale * RES))
-            # downscale colour with LANCZOS on premultiplied data, then hard-threshold alpha for crisp pixels
-            arr = np.asarray(im).astype(np.float32)
-            arr[:, :, :3] *= arr[:, :, 3:4] / 255
-            small = np.stack([np.asarray(Image.fromarray(arr[:, :, c].astype(np.uint8)).resize((w, h), Image.LANCZOS)).astype(np.float32)
-                              for c in range(4)], 2)
-            al = small[:, :, 3]
-            rgb = np.where(al[:, :, None] > 0, small[:, :, :3] * 255 / np.maximum(al[:, :, None], 1), 0)
-            alpha = np.where(al > 110, 255, 0)
-            out[name] = Image.fromarray(np.dstack([np.clip(rgb, 0, 255), alpha]).astype(np.uint8), 'RGBA')
+            out[name] = shrink(im, scale * RES)
     return out

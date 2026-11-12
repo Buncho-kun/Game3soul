@@ -387,17 +387,24 @@ def main():
         if isinstance(im, tuple):
             im, anchors[k] = im[0], im[1:]
             sprites[k] = im
-    for k, im in sprites.items():
-        uri, n = encode(im)
+    # 4x sprites are large on screen, so a slightly coarser quantiser is invisible and keeps the file small
+    def job(k):
+        if k.startswith('prop.cg.'):
+            return 90          # full-screen stills: 90 is indistinguishable from 93 at 1672 px and saves ~2 MB
+        return 88 if (sprites[k].info.get('s') or 0) >= 3 else 93
+    from concurrent.futures import ProcessPoolExecutor
+    keys = list(sprites)
+    with ProcessPoolExecutor() as ex:
+        done = list(ex.map(encode, [sprites[k] for k in keys], [job(k) for k in keys], chunksize=8))
+    for k, (uri, n) in zip(keys, done):
+        im = sprites[k]
         enc[k] = {'src': uri, 'w': im.width, 'h': im.height}
-        if k.startswith(('boss.', 'insp.', 'en.', 'prop.')) and k != 'insp.ticket':
-            enc[k]['s'] = 2
+        if k.startswith(('boss.', 'insp.', 'en.', 'prop.')):
+            enc[k]['s'] = im.info.get('s', 2)
         if k.startswith('prop.cg.'):
             enc[k]['s'] = round(im.width / 384, 4)
         if k.startswith('bg.'):
             enc[k]['s'] = round(im.height / 216, 4)
-        if k == 'insp.ticket':
-            enc[k]['s'] = 2
         if k in anchors:
             enc[k]['ax'] = anchors[k][0]
             if len(anchors[k]) > 1:

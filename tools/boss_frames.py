@@ -6,6 +6,8 @@ kept (e.g. the collapsed K-04 or the ORIGIN form stay bigger than the base
 form). Scales are chosen so the standing pose roughly matches the boss
 hitbox height in the 384x216 game canvas.
 """
+import os
+
 import numpy as np
 from PIL import Image
 from scipy import ndimage
@@ -57,7 +59,9 @@ BOSSES = {
 }
 
 
-RES = 2   # stored at 2x, drawn at half size on the 2x canvas
+# Sprites are stored at RES x the 384x216 layout grid. The game canvas renders at 4x on phone / retina
+# screens, so 4 keeps the detail of the source art; ST_RES=2 rebuilds the old half-size set.
+RES = int(os.environ.get('ST_RES', '4'))
 
 
 def key_out(rgb):
@@ -88,7 +92,17 @@ def key_out(rgb):
     return Image.fromarray(np.dstack([col, (al * 255).astype(np.uint8)]), 'RGBA')
 
 
-def shrink(im, scale):
+def shrink(im, scale, hard=False):
+    """Resize a keyed RGBA cut-out. `scale` = output px per source px at RES.
+
+    If that would enlarge the source by more than ~15% there is no detail to gain: the sprite falls back
+    to the 2x chunky-pixel version (the game draws it 2:1 on the 4x canvas). The stored resolution is
+    returned in im.info['s']. 2x sprites and tiles (hard=True) get a 1-bit edge, 4x sprites keep a
+    one-pixel anti-aliased edge.
+    """
+    res = RES
+    if RES > 2 and scale > 1.15:
+        scale, res = scale * 2 / RES, 2
     w, h = max(1, round(im.width * scale)), max(1, round(im.height * scale))
     arr = np.asarray(im).astype(np.float32)
     arr[:, :, :3] *= arr[:, :, 3:4] / 255
@@ -96,7 +110,10 @@ def shrink(im, scale):
                       for c in range(4)], 2)
     al = small[:, :, 3]
     rgb = np.where(al[:, :, None] > 0, small[:, :, :3] * 255 / np.maximum(al[:, :, None], 1), 0)
-    return Image.fromarray(np.dstack([np.clip(rgb, 0, 255), np.where(al > 110, 255, 0)]).astype(np.uint8), 'RGBA')
+    alpha = np.where(al > 110, 255, 0) if (res < 3 or hard) else np.clip((al - 70) / 110, 0, 1) * 255
+    out = Image.fromarray(np.dstack([np.clip(rgb, 0, 255), alpha]).astype(np.uint8), 'RGBA')
+    out.info['s'] = res
+    return out
 
 
 def frames(src_path):

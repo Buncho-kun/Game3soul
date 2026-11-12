@@ -44,5 +44,5 @@ def frames(src):
             ys, xs = np.nonzero(core)
             cx = float(np.median(xs)) if len(xs) else im.width / 2
             small = shrink(im, SCALE * RES)
-            out[f'ren.dash.{name}{i + 1}'] = (small, round(cx * small.width / im.width), RES)
+            out[f'ren.dash.{name}{i + 1}'] = (small, round(cx * small.width / im.width), small.info['s'])
     return out
