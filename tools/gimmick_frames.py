@@ -49,8 +49,9 @@ def frames(src):
         sc = THICK * RES / mid_h
         for nm, (x0, x1), im in zip(['l', 'm1', 'r'], cols, ims):
             xs = np.nonzero(np.asarray(im)[:, :, 3].max(0) > 24)[0]
-            out[f'tile.{theme}.{nm}'] = (shrink(im.crop((xs[0], top, xs[-1] + 1, bot)), sc), round((surf - top) * sc), RES)
+            t = shrink(im.crop((xs[0], top, xs[-1] + 1, bot)), sc, hard=True)
+            out[f'tile.{theme}.{nm}'] = (t, round((surf - top) * sc * t.info['s'] / RES), t.info['s'])
         out[f'tile.{theme}.m2'] = out[f'tile.{theme}.m1']
         under = keyed(rgb[uy0:uy1, ucol[0]:ucol[1]], bg)
-        out[f'tile.{theme}.under'] = shrink(under.crop(bbox(under)), sc)
+        out[f'tile.{theme}.under'] = shrink(under.crop(bbox(under)), sc, hard=True)
     return out

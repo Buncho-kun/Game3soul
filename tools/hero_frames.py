@@ -7,7 +7,7 @@ centre is stored as an anchor so wide slash frames stay aligned with the hitbox.
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-from boss_frames import shrink
+from boss_frames import shrink, RES
 
 REN_BG = (10, 15, 28)
 MIO_BG = (6, 12, 30)
@@ -49,13 +49,12 @@ def key_dark(rgb, bg):
     return Image.fromarray(np.dstack([col, al * 255]).astype(np.uint8), 'RGBA')
 
 
-RES = 2   # heroes are stored at 2x and drawn at half size on the 2x canvas
 
 
 def finish(im, x0, bbx, cxs, scale):
     small = shrink(im, scale * RES)
     ax = round((cxs - x0 - bbx) * small.width / im.width)
-    return (small, ax, RES)
+    return (small, ax, small.info['s'])
 
 
 def cut(sheet, bg, scale, items, prefix):

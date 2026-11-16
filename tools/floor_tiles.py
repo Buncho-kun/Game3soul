@@ -52,5 +52,6 @@ def frames(src):
                 im = im.crop((0, 0, round(im.width * CAP_KEEP), im.height))
             elif name == 'r':
                 im = im.crop((im.width - round(im.width * CAP_KEEP), 0, im.width, im.height))
-            out[f'tile.{theme}.{name}'] = (shrink(im, scale), round((surf - top) * scale), RES)
+            t = shrink(im, scale, hard=True)   # hard edge: neighbouring tiles must butt together without a seam
+            out[f'tile.{theme}.{name}'] = (t, round((surf - top) * scale * t.info['s'] / RES), t.info['s'])
     return out

@@ -44,7 +44,7 @@ def frames(src):
         im = crop(keyed(a[y0:y1, 30:1060], bg))
         # the strip already repeats 4x: keep one quarter so it tiles at a sensible size
         q = im.crop((0, 0, im.width // 4, im.height))
-        out[f'tile.{t}.under'] = shrink(q, 26 * RES / q.height)
+        out[f'tile.{t}.under'] = shrink(q, 26 * RES / q.height, hard=True)
     a, bg = load(src, 'promptPlates')
     for i, (x0, x1) in enumerate(PLATES):
         im = crop(key_grey(a[300:640, x0:x1], bg) if i == 2 else keyed(a[300:640, x0:x1], bg))
